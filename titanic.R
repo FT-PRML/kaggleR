@@ -12,6 +12,8 @@ setwd("C:/Users/keijirou/Desktop/kaggle")
 library(ggplot2)
 library(randomForest)
 
+#テストコメント
+
 set.seed(1)
 train <- read.csv("../input/train.csv", stringsAsFactors=FALSE)
 test  <- read.csv("../input/test.csv",  stringsAsFactors=FALSE)
