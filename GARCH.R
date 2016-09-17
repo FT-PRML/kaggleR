@@ -1,22 +1,22 @@
 #GARCH
 #setwd("C:/win32/Sourcecode")#setwd("C:/work")
-#���v���t�@�C���̓ǂݍ���
+#収益率ファイルの読み込み
 ret<-read.table("6Portdai_VAR1_L0w1T250ret",header=F,sep=",",nrows=-1)
 #ret<-read.table("25Portdai_ret.csv",header=F,sep=",",nrows=-1)
-#���Ҏ��v���܂��̓p�����[�^�̓ǂݍ���
+#期待収益率またはパラメータの読み込み
 hat<-read.table("6Portdai_VAR1_L0w1T250par.csv",header=F,sep=",",nrows=-1)
 #hat<-read.table("25Portdai_VAR1_L0w1T250_par.csv",header=F,sep=",",nrows=-1)
-#header=F�F1�s�ڂɗ񖼂�������Ă��Ȃ��Bnrows=�s�ڂ܂œǂݍ��ށA�}�C�i�X�̎����ׂāBskip=tau-1�ǂݔ�΂� R��1����(python��0����)
+#header=F：1行目に列名が書かれていない。nrows=行目まで読み込む、マイナスの時すべて。skip=tau-1読み飛ばす Rは1から(pythonは0から)
 
-ndim =dim(ret)[2]#���Y��
-nobs =250-1#�w�K���Ԑ�
+ndim =dim(ret)[2]#資産数
+nobs =250-1#学習期間数
 
-#GARCH�̗\������p�����[�^�����l
-a <- c(0.002,0.002,0.002,0.002,0.002,0.002)
+#GARCHの予測するパラメータ初期値
+a <- c(0.001,0.002,0.002,0.002,0.002,0.002)
 A <- diag(c(0.2,0.2,0.2,0.2,0.2,0.2))
 B <- diag(c(0.7,0.7,0.7,0.7,0.7,0.7))
 ini.dcc <- c(0.2,0.2)
-#�c�������߂�
+#残差を求める
 for (tau in 1:2) { #250
   dvar = c()
   for (t in 1:nobs) {
@@ -24,9 +24,9 @@ for (tau in 1:2) { #250
           -colSums(matrix(as.numeric(hat[tau,])*c(1,as.numeric(ret[tau+nobs+2-t,])),ndim+1,ndim))
     dvar <- rbind(dvar,er)  
   }
-  #as.numeric()�x�N�g�����Bmatrix(,�s��,��)�s�񉻁BcolSums()��̑��a
+  #as.numeric()ベクトル化。matrix(,行数,列数)行列化。colSums()列の総和
   In <- diag(ndim)
-  #�t�@�[�X�g�X�e�[�WGARCH�p�����[�^����
+  #ファーストステージGARCHパラメータ推定
   first.stage <- dcc.estimation1(dvar = dvar, a = a, A = A, 
                                  B = B, model = "diagonal", method = "BFGS")
   if (first.stage$convergence != 0) {
@@ -41,10 +41,10 @@ for (tau in 1:2) { #250
   estB <- estimates$B
   h <- vector.garch(dvar, esta, estA, estB)
   std.resid <- dvar/sqrt(h)
-  #�\��
+  #予測
   h_t <-esta+diag(estA)*as.numeric(dvar[nobs,])*as.numeric(dvar[nobs,])+diag(estB)*as.numeric(h[nobs,])
   
-  #�Z�J���h�X�e�[�WDCC�p�����[�^����
+  #セカンドステージDCCパラメータ推定
   second.stage <- dcc.estimation2(std.resid, ini.dcc, gradient = 1)
   if (second.stage$convergence != 0) {
     cat("* The second stage optimization has failed.   *\n")
