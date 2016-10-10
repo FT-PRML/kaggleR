@@ -1,2 +1,2 @@
-# kaggleR
-kaggle_R用
+# Rのコードのリポジトリ
+Rの基本，kaggleなど
